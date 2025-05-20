@@ -13,26 +13,19 @@ namespace ProfileSample.Controllers
     {
         public ActionResult Index()
         {
-            var context = new ProfileSampleEntities();
-
-            var sources = context.ImgSources.Take(20).Select(x => x.Id);
-            
-            var model = new List<ImageModel>();
-
-            foreach (var id in sources)
+            using (var context = new ProfileSampleEntities())
             {
-                var item = context.ImgSources.Find(id);
+                var model = context.ImgSources
+                    .Take(20)
+                    .Select(item => new ImageModel
+                    {
+                        Name = item.Name,
+                        Data = item.Data
+                    })
+                    .ToList();
 
-                var obj = new ImageModel()
-                {
-                    Name = item.Name,
-                    Data = item.Data
-                };
-
-                model.Add(obj);
-            } 
-
-            return View(model);
+                return View(model);
+            }
         }
 
         public ActionResult Convert()
@@ -43,22 +36,21 @@ namespace ProfileSample.Controllers
             {
                 foreach (var file in files)
                 {
-                    using (var stream = new FileStream(file, FileMode.Open))
+                    var fileName = Path.GetFileName(file);
+                    var destinationPath = Server.MapPath($"~/UploadedImages/{fileName}");
+
+                    System.IO.File.Copy(file, destinationPath, overwrite: true);
+
+                    var entity = new ImgSource()
                     {
-                        byte[] buff = new byte[stream.Length];
+                        Name = fileName,
+                        FilePath = $"/UploadedImages/{fileName}",
+                    };
 
-                        stream.Read(buff, 0, (int) stream.Length);
+                    context.ImgSources.Add(entity);
+                }
 
-                        var entity = new ImgSource()
-                        {
-                            Name = Path.GetFileName(file),
-                            Data = buff,
-                        };
-
-                        context.ImgSources.Add(entity);
-                        context.SaveChanges();
-                    }
-                } 
+                context.SaveChanges();
             }
 
             return RedirectToAction("Index");
