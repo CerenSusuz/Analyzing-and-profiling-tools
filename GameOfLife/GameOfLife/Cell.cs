@@ -1,11 +1,9 @@
-﻿using System.Windows;
-using System.Windows.Media;
-using System.Windows.Shapes;
-
-namespace GameOfLife
+﻿namespace GameOfLife
 {
     class Cell
     {
+        public const int CellSize = 5;
+
         public int PositionX { get; set; }
         public int PositionY { get; set; }
         public int Age { get; set; }
@@ -15,11 +13,11 @@ namespace GameOfLife
 
         public Cell(int row, int column, int age, bool alive)
         {
-            PositionX = row * 5;
-            PositionY = column * 5;
+            PositionX = row * CellSize;
+            PositionY = column * CellSize;
             Age = age;
             IsAlive = alive;
-            
+
         }
     }
 }
