@@ -31,17 +31,22 @@ namespace PasswordHashingApp
             const int hashLength = 20;
             int totalLength = salt.Length + hashLength;
 
-            using (var pbkdf2 = new Rfc2898DeriveBytes(passwordText, salt, iterations))
-            {
-                byte[] hashBytes = new byte[totalLength];
+            Span<byte> hashSpan = stackalloc byte[hashLength];
+            Rfc2898DeriveBytes.Pbkdf2(
+                password: passwordText,
+                salt: salt,
+                destination: hashSpan,
+                iterations: iterations,
+                hashAlgorithm: HashAlgorithmName.SHA1
+            );
 
-                Array.Copy(salt, 0, hashBytes, 0, salt.Length);
+            byte[] result = new byte[totalLength];
+            Array.Copy(salt, 0, result, 0, salt.Length);
+            hashSpan.CopyTo(result.AsSpan(salt.Length));
 
-                Array.Copy(pbkdf2.GetBytes(hashLength), 0, hashBytes, salt.Length, hashLength);
-
-                return Convert.ToBase64String(hashBytes);
-            }
+            return Convert.ToBase64String(result);
         }
+
 
         public static byte[] GenerateSalt(int size)
         {
