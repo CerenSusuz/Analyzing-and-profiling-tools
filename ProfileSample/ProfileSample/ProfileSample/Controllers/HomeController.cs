@@ -36,21 +36,21 @@ namespace ProfileSample.Controllers
             {
                 foreach (var file in files)
                 {
-                    var fileName = Path.GetFileName(file);
-                    var destinationPath = Server.MapPath($"~/UploadedImages/{fileName}");
-
-                    System.IO.File.Copy(file, destinationPath, overwrite: true);
-
-                    var entity = new ImgSource()
+                    using (var stream = new FileStream(file, FileMode.Open))
                     {
-                        Name = fileName,
-                        FilePath = $"/UploadedImages/{fileName}",
-                    };
+                        byte[] buff = new byte[stream.Length];
+                        stream.Read(buff, 0, (int)stream.Length);
 
-                    context.ImgSources.Add(entity);
+                        var entity = new ImgSource()
+                        {
+                            Name = Path.GetFileName(file),
+                            Data = buff
+                        };
+
+                        context.ImgSources.Add(entity);
+                        context.SaveChanges();
+                    }
                 }
-
-                context.SaveChanges();
             }
 
             return RedirectToAction("Index");
