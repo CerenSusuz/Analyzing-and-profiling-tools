@@ -21,19 +21,23 @@ namespace PasswordHashingApp
 
         public static string GeneratePasswordHashUsingSalt(string passwordText, byte[] salt)
         {
-            if (string.IsNullOrEmpty(passwordText)) throw new ArgumentException("Password cannot be null or empty");
-            
-            if (salt == null || salt.Length != 16) throw new ArgumentException("Salt must be exactly 16 bytes.");
+            if (string.IsNullOrEmpty(passwordText))
+                throw new ArgumentException("Password cannot be null or empty");
+
+            if (salt == null || salt.Length != 16)
+                throw new ArgumentException("Salt must be exactly 16 bytes.");
 
             const int iterations = 10000;
             const int hashLength = 20;
-            const int totalLength = 16 + 20;
+            int totalLength = salt.Length + hashLength;
 
             using (var pbkdf2 = new Rfc2898DeriveBytes(passwordText, salt, iterations))
             {
                 byte[] hashBytes = new byte[totalLength];
-                Array.Copy(salt, 0, hashBytes, 0, 16);
-                Array.Copy(pbkdf2.GetBytes(hashLength), 0, hashBytes, 16, hashLength);
+
+                Array.Copy(salt, 0, hashBytes, 0, salt.Length);
+
+                Array.Copy(pbkdf2.GetBytes(hashLength), 0, hashBytes, salt.Length, hashLength);
 
                 return Convert.ToBase64String(hashBytes);
             }
