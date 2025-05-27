@@ -2,27 +2,29 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using ProfileSample.DAL;
 using ProfileSample.Models;
+using System.Data.Entity; // Needed for ToListAsync()
 
 namespace ProfileSample.Controllers
 {
     public class HomeController : Controller
     {
-        public ActionResult Index()
+        public async Task<ActionResult> Index()
         {
             using (var context = new ProfileSampleEntities())
             {
-                var model = context.ImgSources
+                var model = await context.ImgSources
                     .Take(20)
                     .Select(item => new ImageModel
                     {
                         Name = item.Name,
                         Data = item.Data
                     })
-                    .ToList();
+                    .ToListAsync();
 
                 return View(model);
             }
