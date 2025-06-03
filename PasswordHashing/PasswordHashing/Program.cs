@@ -1,0 +1,62 @@
+﻿using System;
+using System.Security.Cryptography;
+
+namespace PasswordHashingApp
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("Enter a password to hash:");
+            string password = Console.ReadLine();
+
+            byte[] salt = GenerateSalt(16);
+            Console.WriteLine($"Salt (Base64): {Convert.ToBase64String(salt)}");
+
+            string hashedPassword = GeneratePasswordHashUsingSalt(password, salt);
+            Console.WriteLine($"Password Hash (Base64): {hashedPassword}");
+
+            Console.ReadKey();
+        }
+
+        public static string GeneratePasswordHashUsingSalt(string passwordText, byte[] salt)
+        {
+            if (string.IsNullOrEmpty(passwordText))
+                throw new ArgumentException("Password cannot be null or empty");
+
+            if (salt == null || salt.Length != 16)
+                throw new ArgumentException("Salt must be exactly 16 bytes.");
+
+            const int iterations = 10000;
+            const int hashLength = 20;
+            int totalLength = salt.Length + hashLength;
+
+            Span<byte> hashSpan = stackalloc byte[hashLength];
+            Rfc2898DeriveBytes.Pbkdf2(
+                password: passwordText,
+                salt: salt,
+                destination: hashSpan,
+                iterations: iterations,
+                hashAlgorithm: HashAlgorithmName.SHA1
+            );
+
+            byte[] result = new byte[totalLength];
+            Array.Copy(salt, 0, result, 0, salt.Length);
+            hashSpan.CopyTo(result.AsSpan(salt.Length));
+
+            return Convert.ToBase64String(result);
+        }
+
+
+        public static byte[] GenerateSalt(int size)
+        {
+            byte[] salt = new byte[size];
+            using (var rng = new RNGCryptoServiceProvider())
+            {
+                rng.GetBytes(salt);
+            }
+
+            return salt;
+        }
+    }
+}
